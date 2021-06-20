@@ -1,4 +1,5 @@
-import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
+import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts"
+import {existsSync } from "https://deno.land/std/fs/mod.ts"
 
 const PATH = "/hdisk/edgeless/Socket/Ventoy";
 const REMOTE_NAME = "pineapple";
@@ -93,10 +94,14 @@ async function main() {
 
   if (!need) {
     //下载文件
-    console.log("Start downloading " + name);
+    console.log("Start downloading " + name)
     downloadFile(url, name);
-    console.log("Start uploading " + name);
-    remoteUpload(name);
+    console.log("Start uploading " +"./"+ name)
+    if(existsSync("./"+name)) remoteUpload("./"+name)
+    else if(existsSync("../"+name)) remoteUpload("../"+name)
+    else{
+      console.log("::error::Fail to upload,file not found")
+    }
   } else {
     console.log("Has been up to date");
   }
