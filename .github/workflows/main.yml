@@ -1,0 +1,34 @@
+name: Serve
+
+on:
+  push:
+    branches: [ master ]
+  schedule:
+    - cron: '0 16 * * *'
+
+jobs:
+  serve:
+    runs-on: windows-latest
+    steps:
+      # 获取仓库源码
+      - uses: actions/checkout@v2
+
+      # 获取rclone
+      - uses: actions/checkout@v2
+        with:
+          repository: Cnotech/rclone
+          token: ${{ secrets.RCLONE_TOKEN }}
+          path: rclone
+
+      # 取出rclone
+      - name: Copy rclone
+        run: mv .\rclone\* .\
+
+      # 安装deno
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      
+      # 执行任务
+      - name: Serve
+        run: deno run --allow-all --unstable index.ts

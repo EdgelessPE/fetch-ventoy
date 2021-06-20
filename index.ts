@@ -1,7 +1,16 @@
 import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
 
-let PATH = "/hdisk/edgeless/Socket/Ventoy/";
+const PATH = "/hdisk/edgeless/Socket/Ventoy";
+const REMOTE_NAME = "pineapple";
+
+function Uint8ArrayToString(fileData: Uint8Array): string {
+  let dataString = "";
+  for (let i = 0; i < fileData.length; i++) {
+    dataString += String.fromCharCode(fileData[i]);
+  }
+
+  return dataString;
+}
 
 //https://github.com/ventoy/Ventoy/releases/download/v1.0.46/ventoy-1.0.46-windows.zip
 async function getAddr() {
@@ -47,20 +56,32 @@ async function downloadFile(url: string, filename: string) {
   const rdr = rsp.body?.getReader();
   if (rdr) {
     const r = readerFromStreamReader(rdr);
-    const f = await Deno.open(PATH + filename, { create: true, write: true });
+    const f = await Deno.open("./" + filename, { create: true, write: true });
     await Deno.copy(r, f);
     f.close();
   }
 }
 
-function needUpdate(filename: string): boolean {
-  return !existsSync(PATH + filename);
+async function remoteExist(filename: string): Promise<boolean> {
+  const p = Deno.run({
+    cmd: ["./rclone.exe", "ls", REMOTE_NAME + ":" + PATH],
+    stdout: "piped",
+  });
+  const outputBuf = await p.output();
+  const output = Uint8ArrayToString(outputBuf);
+
+  return output.includes(filename);
+}
+
+async function remoteUpload(filename: string): Promise<boolean> {
+  const p = Deno.run({
+    cmd: ["./rclone.exe", "copy", filename, REMOTE_NAME + ":" + PATH],
+  });
+  const s = await p.status();
+  return s.success;
 }
 
 async function main() {
-  //根据环境判断PATH位置
-  if (!existsSync(PATH)) PATH = "./";
-
   //获取url
   const url = await getAddr();
 
@@ -68,10 +89,14 @@ async function main() {
   const name = parseFileName(url);
 
   //判断是否需要更新
-  if (needUpdate(name)) {
+  const need = await remoteExist(name);
+
+  if (!need) {
     //下载文件
     console.log("Start downloading " + name);
     downloadFile(url, name);
+    console.log("Start uploading " + name);
+    remoteUpload(name);
   } else {
     console.log("Has been up to date");
   }
