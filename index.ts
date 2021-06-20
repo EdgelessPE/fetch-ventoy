@@ -97,7 +97,7 @@ async function main() {
   if (!need) {
     //下载文件
     console.log("Start downloading " + name);
-    let downloadSuc = await downloadFile(url, name);
+    const downloadSuc = await downloadFile(url, name);
     if (!downloadSuc) {
       console.log("::error::Download failed,exit");
       return;
@@ -117,11 +117,13 @@ async function main() {
         console.log("Change to " + path);
       }
     }
-    let uploadRes = await remoteUpload(path);
+    const uploadRes = await remoteUpload(path);
     if (!uploadRes) {
       console.log("::error::Upload failed,exit");
       return;
     }
+  } else {
+    console.log("Has been up to date");
   }
 }
 
