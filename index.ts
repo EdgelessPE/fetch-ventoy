@@ -1,5 +1,5 @@
-import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts"
-import {existsSync } from "https://deno.land/std/fs/mod.ts"
+import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
+import { existsSync } from "https://deno.land/std/fs/mod.ts";
 
 const PATH = "/hdisk/edgeless/Socket/Ventoy";
 const REMOTE_NAME = "pineapple";
@@ -52,7 +52,7 @@ function parseFileName(url: string): string {
   return splitRes[splitRes.length - 1];
 }
 
-async function downloadFile(url: string, filename: string) {
+async function downloadFile(url: string, filename: string): Promise<boolean> {
   const rsp = await fetch(url);
   const rdr = rsp.body?.getReader();
   if (rdr) {
@@ -61,6 +61,8 @@ async function downloadFile(url: string, filename: string) {
     await Deno.copy(r, f);
     f.close();
   }
+
+  return existsSync("./" + filename);
 }
 
 async function remoteExist(filename: string): Promise<boolean> {
@@ -94,16 +96,32 @@ async function main() {
 
   if (!need) {
     //下载文件
-    console.log("Start downloading " + name)
-    downloadFile(url, name);
-    console.log("Start uploading " +"./"+ name)
-    if(existsSync("./"+name)) remoteUpload("./"+name)
-    else if(existsSync("./fetch-ventoy/"+name)) remoteUpload("./fetch-ventoy/"+name)
-    else{
-      console.log("::error::Fail to upload,file not found")
+    console.log("Start downloading " + name);
+    let downloadSuc = await downloadFile(url, name);
+    if (!downloadSuc) {
+      console.log("::error::Download failed,exit");
+      return;
     }
-  } else {
-    console.log("Has been up to date");
+
+    console.log("Start uploading " + name);
+    const possiblePaths = [
+      name,
+      "./" + name,
+      "../" + name,
+      "./fetch-ventoy/" + name,
+    ];
+    let path = name;
+    for (let i = 0; i < possiblePaths.length; i++) {
+      if (existsSync(possiblePaths[i])) {
+        path = possiblePaths[i];
+        console.log("Change to " + path);
+      }
+    }
+    let uploadRes = await remoteUpload(path);
+    if (!uploadRes) {
+      console.log("::error::Upload failed,exit");
+      return;
+    }
   }
 }
 
