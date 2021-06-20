@@ -98,7 +98,7 @@ async function main() {
     downloadFile(url, name);
     console.log("Start uploading " +"./"+ name)
     if(existsSync("./"+name)) remoteUpload("./"+name)
-    else if(existsSync("../"+name)) remoteUpload("../"+name)
+    else if(existsSync("./fetch-ventoy/"+name)) remoteUpload("./fetch-ventoy/"+name)
     else{
       console.log("::error::Fail to upload,file not found")
     }
