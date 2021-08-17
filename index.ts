@@ -56,13 +56,13 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
   return existsSync("./" + filename);
 }
 
-function localExist(filename: string): Promise<boolean> {
-  return existsSync(PATH+"/"+filename);
+async function localExist(filename: string): Promise<boolean> {
+  return await existsSync(PATH+"/"+filename);
 }
 
-function localUpload(filename: string): Promise<boolean> {
+async function localUpload(filename: string): Promise<boolean> {
   Deno.copyFileSync(filename,PATH+"/"+filename)
-  return existsSync(PATH+"/"+filename);
+  return await existsSync(PATH+"/"+filename);
 }
 
 async function main() {
@@ -73,7 +73,7 @@ async function main() {
   const name = parseFileName(url);
 
   //判断是否需要更新
-  const need = localExist(name);
+  const need = await localExist(name);
 
   if (!need) {
     //下载文件
@@ -98,7 +98,7 @@ async function main() {
         console.log("Change to " + path);
       }
     }
-    const uploadRes = localUpload(path);
+    const uploadRes = await localUpload(path);
     if (!uploadRes) {
       console.log("::error::Upload failed,exit");
       return;
