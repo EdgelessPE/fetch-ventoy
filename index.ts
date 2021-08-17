@@ -1,17 +1,8 @@
 import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
+import { copy } from "https://deno.land/std/io/util.ts";
 
 const PATH = "/hdisk/edgeless/Socket/Ventoy";
-const REMOTE_NAME = "pineapple";
-
-function Uint8ArrayToString(fileData: Uint8Array): string {
-  let dataString = "";
-  for (let i = 0; i < fileData.length; i++) {
-    dataString += String.fromCharCode(fileData[i]);
-  }
-
-  return dataString;
-}
 
 //https://github.com/ventoy/Ventoy/releases/download/v1.0.46/ventoy-1.0.46-windows.zip
 async function getAddr() {
@@ -58,30 +49,20 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
   if (rdr) {
     const r = readerFromStreamReader(rdr);
     const f = await Deno.open("./" + filename, { create: true, write: true });
-    await Deno.copy(r, f);
+    await copy(r, f);
     f.close();
   }
 
   return existsSync("./" + filename);
 }
 
-async function remoteExist(filename: string): Promise<boolean> {
-  const p = Deno.run({
-    cmd: ["./rclone.exe", "ls", REMOTE_NAME + ":" + PATH],
-    stdout: "piped",
-  });
-  const outputBuf = await p.output();
-  const output = Uint8ArrayToString(outputBuf);
-
-  return output.includes(filename);
+function localExist(filename: string): Promise<boolean> {
+  return existsSync(PATH+"/"+filename);
 }
 
-async function remoteUpload(filename: string): Promise<boolean> {
-  const p = Deno.run({
-    cmd: ["./rclone.exe", "copy", filename, REMOTE_NAME + ":" + PATH],
-  });
-  const s = await p.status();
-  return s.success;
+function localUpload(filename: string): Promise<boolean> {
+  Deno.copyFileSync(filename,PATH+"/"+filename)
+  return existsSync(PATH+"/"+filename);
 }
 
 async function main() {
@@ -92,7 +73,7 @@ async function main() {
   const name = parseFileName(url);
 
   //判断是否需要更新
-  const need = await remoteExist(name);
+  const need = localExist(name);
 
   if (!need) {
     //下载文件
@@ -117,7 +98,7 @@ async function main() {
         console.log("Change to " + path);
       }
     }
-    const uploadRes = await remoteUpload(path);
+    const uploadRes = localUpload(path);
     if (!uploadRes) {
       console.log("::error::Upload failed,exit");
       return;
