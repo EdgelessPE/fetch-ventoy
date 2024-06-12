@@ -67,7 +67,7 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
 
 async function remoteExist(filename: string): Promise<boolean> {
   const p = Deno.run({
-    cmd: ["cloud189.exe", "ls", PATH],
+    cmd: ["cloud189", "ls", PATH],
     stdout: "piped",
   });
   const outputBuf = await p.output();
@@ -78,7 +78,7 @@ async function remoteExist(filename: string): Promise<boolean> {
 
 async function remoteUpload(filename: string): Promise<boolean> {
   const p = Deno.run({
-    cmd: ["cloud189.exe", "up", filename, PATH],
+    cmd: ["cloud189", "up", filename, PATH],
   });
   const s = await p.status();
   return s.success;
