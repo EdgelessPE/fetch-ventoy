@@ -1,8 +1,8 @@
 import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
 
-const PATH = "/hdisk/edgeless/Socket/Ventoy";
-const REMOTE_NAME = "pineapple";
+const PATH = "/同步盘/Socket/Ventoy";
+// const REMOTE_NAME = "pineapple";
 
 function Uint8ArrayToString(fileData: Uint8Array): string {
   let dataString = "";
@@ -67,7 +67,7 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
 
 async function remoteExist(filename: string): Promise<boolean> {
   const p = Deno.run({
-    cmd: ["./rclone.exe", "ls", REMOTE_NAME + ":" + PATH],
+    cmd: ["cloud189.exe", "ls", PATH],
     stdout: "piped",
   });
   const outputBuf = await p.output();
@@ -78,7 +78,7 @@ async function remoteExist(filename: string): Promise<boolean> {
 
 async function remoteUpload(filename: string): Promise<boolean> {
   const p = Deno.run({
-    cmd: ["./rclone.exe", "copy", filename, REMOTE_NAME + ":" + PATH],
+    cmd: ["cloud189.exe", "up", filename, PATH],
   });
   const s = await p.status();
   return s.success;

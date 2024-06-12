@@ -1,3 +1,5 @@
 .vscode
 rclone*
 aria2c.exe
+*.zip
+.idea
