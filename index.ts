@@ -1,5 +1,6 @@
 import { readerFromStreamReader } from "https://deno.land/std/io/mod.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
+import { copy } from "https://deno.land/std/io/copy.ts";
 
 const PATH = "/同步盘/Socket/Ventoy";
 // const REMOTE_NAME = "pineapple";
@@ -58,7 +59,7 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
   if (rdr) {
     const r = readerFromStreamReader(rdr);
     const f = await Deno.open("./" + filename, { create: true, write: true });
-    await Deno.copy(r, f);
+    await copy(r, f);
     f.close();
   }
 
@@ -66,22 +67,20 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
 }
 
 async function remoteExist(filename: string): Promise<boolean> {
-  const p = Deno.run({
-    cmd: ["cloud189", "ls", PATH],
-    stdout: "piped",
-  });
+  const p=new Deno.Command("cloud189",{
+    args:["ls", PATH]
+  })
   const outputBuf = await p.output();
-  const output = Uint8ArrayToString(outputBuf);
+  const output = Uint8ArrayToString(outputBuf.stdout);
 
   return output.includes(filename);
 }
 
 async function remoteUpload(filename: string): Promise<boolean> {
-  const p = Deno.run({
-    cmd: ["cloud189", "up", filename, PATH],
-  });
-  const s = await p.status();
-  return s.success;
+  const p=new Deno.Command("cloud189",{
+    args:[ "up", filename, PATH]
+  })
+  return await p.outputSync().success
 }
 
 async function main() {
