@@ -43,9 +43,8 @@ function _parseVersion(url: string): string {
   const versionMatch = url.match(/ventoy-[.\d]+/);
   if (versionMatch) {
     return versionMatch[0].split("-")[1];
-  } else {
-    return "0.0.0";
   }
+  return "0.0.0";
 }
 
 function parseFileName(url: string): string {
@@ -58,18 +57,18 @@ async function downloadFile(url: string, filename: string): Promise<boolean> {
   const rdr = rsp.body?.getReader();
   if (rdr) {
     const r = readerFromStreamReader(rdr);
-    const f = await Deno.open("./" + filename, { create: true, write: true });
+    const f = await Deno.open(`./${filename}`, { create: true, write: true });
     await copy(r, f);
     f.close();
   }
 
-  return existsSync("./" + filename);
+  return existsSync(`./${filename}`);
 }
 
 async function remoteExist(filename: string): Promise<boolean> {
-  const p=new Deno.Command("cloud189",{
-    args:["ls", PATH]
-  })
+  const p = new Deno.Command("cloud189", {
+    args: ["ls", PATH],
+  });
   const outputBuf = await p.output();
   const output = Uint8ArrayToString(outputBuf.stdout);
 
@@ -77,10 +76,10 @@ async function remoteExist(filename: string): Promise<boolean> {
 }
 
 async function remoteUpload(filename: string): Promise<boolean> {
-  const p=new Deno.Command("cloud189",{
-    args:[ "up", filename, PATH]
-  })
-  return await p.outputSync().success
+  const p = new Deno.Command("cloud189", {
+    args: ["up", filename, PATH],
+  });
+  return await p.outputSync().success;
 }
 
 async function main() {
@@ -95,25 +94,25 @@ async function main() {
 
   if (!need) {
     //下载文件
-    console.log("Start downloading " + name);
+    console.log(`Start downloading ${name}`);
     const downloadSuc = await downloadFile(url, name);
     if (!downloadSuc) {
       console.log("::error::Download failed,exit");
       return;
     }
 
-    console.log("Start uploading " + name);
+    console.log(`Start uploading ${name}`);
     const possiblePaths = [
       name,
-      "./" + name,
-      "../" + name,
-      "./fetch-ventoy/" + name,
+      `./${name}`,
+      `../${name}`,
+      `./fetch-ventoy/${name}`,
     ];
     let path = name;
     for (let i = 0; i < possiblePaths.length; i++) {
       if (existsSync(possiblePaths[i])) {
         path = possiblePaths[i];
-        console.log("Change to " + path);
+        console.log(`Change to ${path}`);
       }
     }
     const uploadRes = await remoteUpload(path);
